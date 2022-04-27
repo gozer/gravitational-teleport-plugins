@@ -37,14 +37,11 @@ import (
 
 	"github.com/gravitational/teleport-plugins/lib"
 	"github.com/gravitational/teleport-plugins/lib/backoff"
-	"github.com/gravitational/teleport-plugins/lib/tctl"
 	"github.com/gravitational/teleport/api/client"
 	"github.com/gravitational/trace"
 
-	authv10 "github.com/gravitational/teleport-plugins/kubernetes/apis/auth/v10"
-	configv10 "github.com/gravitational/teleport-plugins/kubernetes/apis/config/v10"
+	configv9 "github.com/gravitational/teleport-plugins/kubernetes/apis/config/v9"
 	"github.com/gravitational/teleport-plugins/kubernetes/apis/resources"
-	authctrl "github.com/gravitational/teleport-plugins/kubernetes/controllers/auth"
 	resourcesctrl "github.com/gravitational/teleport-plugins/kubernetes/controllers/resources"
 	"github.com/gravitational/teleport-plugins/kubernetes/crd"
 	//+kubebuilder:scaffold:imports
@@ -61,15 +58,14 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(resources.AddToScheme(scheme))
-	utilruntime.Must(configv10.AddToScheme(scheme))
-	utilruntime.Must(authv10.AddToScheme(scheme))
+	utilruntime.Must(configv9.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
 var CLI struct {
 	StartSidecar struct {
-		Config string `kong:"help='The operator will load its initial configuration from this file. Omit this flag to use the default configuration values.',placeholder='/etc/teleport-sidecar.yaml',default='/etc/teleport-operator.yaml'"`
-	} `kong:"cmd,help='Runs Teleport Kubernetes Operator in a sidecar mode'"`
+		Config string `kong:"help='The operator will load its initial configuration from this file. Omit this flag to use the default configuration values.',placeholder='/etc/teleport/operator.yaml',default='/etc/teleport/operator.yaml'"`
+	} `kong:"cmd,help='Runs Teleport Operator in a sidecar mode'"`
 	InstallCRDs struct {
 		Force bool `kong:"help='Overwrite existing CRDs anyway'"`
 	} `kong:"cmd,name=install-crds,help='Installs Custom Resource Definitions to your Kubernetes cluster'"`
@@ -84,7 +80,6 @@ func main() {
 
 	var (
 		newClient func(ctx context.Context) (*client.Client, error)
-		signer    authctrl.Signer
 	)
 	ctrlOptions := ctrl.Options{Scheme: scheme}
 	restConfig := ctrl.GetConfigOrDie()
@@ -93,7 +88,7 @@ func main() {
 	case "start-sidecar":
 		var err error
 
-		config := configv10.DefaultSidecarConfig()
+		config := configv9.DefaultSidecarConfig()
 
 		ctrlOptions, err = ctrlOptions.AndFrom(ctrl.ConfigFile().AtPath(CLI.StartSidecar.Config).OfKind(&config))
 		if err != nil {
@@ -121,12 +116,11 @@ func main() {
 			return clt, nil
 		}
 
-		signer = tctl.Tctl{ConfigPath: config.Teleport.Config, AuthServer: config.Teleport.Addr}
-
 	case "install-crds":
 		ctx, cancel := context.WithCancel(ctrl.SetupSignalHandler())
 		defer cancel()
-		results, err := crd.Install(ctx, restConfig, Version, CLI.InstallCRDs.Force)
+		// results, err := crd.Install(ctx, restConfig, Version, CLI.InstallCRDs.Force)
+		results, err := crd.Install(ctx, restConfig, Version, true)
 		for _, result := range results {
 			logFields := []interface{}{
 				"name", result.CRDName,
@@ -211,14 +205,6 @@ func main() {
 			return trace.Wrap(err, "unable to set up User controller")
 		}
 
-		if err = (authctrl.IdentityReconciler{
-			Kube:        mgr.GetClient(),
-			Scheme:      mgr.GetScheme(),
-			Signer:      signer,
-			RefreshRate: 30 * time.Second,
-		}).SetupWithManager(mgr); err != nil {
-			return trace.Wrap(err, "unable to set up Identity controller")
-		}
 		//+kubebuilder:scaffold:builder
 		return nil
 	})
@@ -259,9 +245,6 @@ func main() {
 	process.SpawnCritical(func(ctx context.Context) error {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
-		if err := authctrl.SetupIndexes(ctx, mgr.GetCache()); err != nil {
-			return trace.Wrap(err, "unable to set up cache indexes")
-		}
 		process.OnTerminate(func(ctx context.Context) error {
 			cancel()
 			return nil

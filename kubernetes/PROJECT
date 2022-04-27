@@ -23,13 +23,4 @@ resources:
   kind: Role
   path: github.com/gravitational/teleport-plugins/kubernetes/apis/resources
   version: v5
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: teleport.dev
-  group: auth
-  kind: Identity
-  path: github.com/gravitational/teleport-plugins/kubernetes/apis/auth/v10
-  version: v10
 version: "3"

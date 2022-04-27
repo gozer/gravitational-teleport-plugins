@@ -78,18 +78,21 @@ func (tctl Tctl) SignToString(ctx context.Context, username string, ttl time.Dur
 	if err != nil {
 		return "", trace.Wrap(err)
 	}
+
 	if err := identityFile.Close(); err != nil {
 		return "", trace.NewAggregate(
 			trace.Wrap(err),
 			os.Remove(identityFile.Name()),
 		)
 	}
+
 	if err := tctl.Sign(ctx, username, "file", identityFile.Name(), ttl); err != nil {
 		return "", trace.NewAggregate(
 			trace.Wrap(err),
 			os.Remove(identityFile.Name()),
 		)
 	}
+
 	bytes, err := ioutil.ReadFile(identityFile.Name())
 	return string(bytes), trace.NewAggregate(
 		trace.Wrap(err),

@@ -1,4 +1,4 @@
-VERSION=10.0.0
+VERSION=9.1.2
 RELEASE_NAME=teleport-operator
 
 # Image URL to use all building/pushing image targets
@@ -65,11 +65,6 @@ manifests: crdgen controller-gen ## Generate WebhookConfiguration, ClusterRole a
 		--plugin=./crdgen/protoc-gen-crd \
 		--crd_out=:./crd \
 		types.proto
-# Generate CRDs for apis/auth.
-	$(CONTROLLER_GEN) \
-		crd \
-		paths="./apis/auth/..." \
-		output:crd:artifacts:config=./crd
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -84,7 +79,7 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: test
-test: manifests generate fmt vet envtest $(VERSRC) ## Run tests.
+test: fmt vet envtest $(VERSRC) ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
 
 ##@ Build

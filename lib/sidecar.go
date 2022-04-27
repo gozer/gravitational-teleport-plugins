@@ -58,7 +58,7 @@ func NewSidecarClient(ctx context.Context, opts SidecarOptions) (*client.Client,
 	role, err := types.NewRole(opts.Role, types.RoleSpecV5{
 		Allow: types.RoleConditions{
 			Rules: []types.Rule{
-				types.Rule{
+				{
 					Resources: []string{"*"},
 					Verbs:     []string{"*"},
 				},

@@ -14,10 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package v10 contains API Schema definitions for the config v10 API group
+// Package v9 contains API Schema definitions for the config v9 API group
 //+kubebuilder:object:generate=true
 //+groupName=config.teleport.dev
-package v10
+package v9
 
 import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -26,7 +26,7 @@ import (
 
 var (
 	// GroupVersion is group version used to register these objects
-	GroupVersion = schema.GroupVersion{Group: "config.teleport.dev", Version: "v10"}
+	GroupVersion = schema.GroupVersion{Group: "config.teleport.dev", Version: "v9"}
 
 	// schemeBuilder is used to add go types to the GroupVersionKind scheme
 	schemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}

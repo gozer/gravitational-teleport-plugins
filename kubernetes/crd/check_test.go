@@ -29,29 +29,11 @@ type CheckSuite struct {
 
 func TestCheck(t *testing.T) { suite.Run(t, &CheckSuite{}) }
 
-func (s *CheckSuite) TestEmpty() {
-	t := s.T()
-
-	err := Check(s.Context(), s.k8sConfig, "10.0.0")
-	require.Error(t, err)
-	require.Contains(t, err.Error(), `"identities.auth.teleport.dev" not found`)
-}
-
 func (s *CheckSuite) TestInstalled() {
 	t := s.T()
 
-	_, err := Install(s.Context(), s.k8sConfig, "10.0.0", false)
+	_, err := Install(s.Context(), s.k8sConfig, "9.1.2", false)
 	require.NoError(t, err)
-	err = Check(s.Context(), s.k8sConfig, "10.0.0")
+	err = Check(s.Context(), s.k8sConfig, "9.1.2")
 	require.NoError(t, err)
-}
-
-func (s *CheckSuite) TestInstalledOld() {
-	t := s.T()
-
-	_, err := Install(s.Context(), s.k8sConfig, "10.0.0", false)
-	require.NoError(t, err)
-	err = Check(s.Context(), s.k8sConfig, "10.0.1")
-	require.Error(t, err)
-	require.Contains(t, err.Error(), `resource version v10 of identities.auth.teleport.dev is old`)
 }
