@@ -84,15 +84,27 @@ terraform:
 terraform-gen-tfschema:
 	make -C terraform gen-tfschema
 
+.PHONY: docker-build-kubernetes
+docker-build-kubernetes:
+	$(MAKE) -C kubernetes docker-build
+
+.PHONY: kubernetes-install
+kubernetes-install:
+	$(MAKE) -C kubernetes install
+	
+.PHONY: kubernetes-test
+kubernetes-test:
+	$(MAKE) -C kubernetes test
+
 .PHONY: event-handler
 event-handler:
 	make -C event-handler
 
 # Run all tests
 .PHONY: test
-test: test-tooling
+test: test-tooling kubernetes-test
 	@echo Testing plugins against Teleport $(TELEPORT_GET_VERSION)
-	go test -race -count 1 $(shell go list ./...)
+	go test -race -count 1 $(shell go list ./... | grep -v '/kubernetes/')
 
 .PHONY: test-tooling
 test-tooling:
